@@ -1,3 +1,15 @@
 name = "owntracks-cloudflare-supabase"
 main = "src/worker.ts"
 compatibility_date = "2023-08-01"
+
+[vars]
+
+# Enter in the OwnTracks application. (Preferences / Connection / Identification)
+
+BASIC_USER = "username"
+BASIC_PASSWORD = "password"
+
+# Copy from the Supabase dashboard. (Project / Settings / Project Settings / API)
+
+SUPABASE_URL = "https://{{subdomain}}.supabase.co"
+SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.…"
