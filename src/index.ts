@@ -1,7 +1,7 @@
 import type { Bindings } from './worker';
 
 export const insertToSupabase =
-	(env: Bindings) => (options: { body: string; table: 'locations' | 'logs' }) =>
+	(env: Bindings) => (options: { body: string; table: 'locations' | 'logs' | 'waypoints' }) =>
 		new Request(new URL(`/rest/v1/${options.table}`, env.SUPABASE_URL), {
 			method: 'POST',
 			body: options.body,
@@ -11,3 +11,6 @@ export const insertToSupabase =
 				'Content-Type': 'application/json',
 			},
 		});
+
+export const timestampToDateString = (timestamp: number, multiply = 1000) =>
+	new Date(timestamp * multiply).toISOString();

@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
-import { insertToSupabase } from '.';
+import { insertToSupabase, timestampToDateString } from '.';
 import { Location } from './schema/location';
+import { Waypoint } from './schema/waypoint';
 
 export type Bindings = {
 	BASIC_USER: string;
@@ -14,42 +15,58 @@ const app = new Hono<{ Bindings: Bindings }>();
 app.post('/', async (c) => {
 	const insert = insertToSupabase(c.env);
 
-	if (new URL(c.req.url).protocol !== 'https:')
-		return new Response(null, { status: 426 });
+	if (new URL(c.req.url).protocol !== 'https:') return new Response(null, { status: 426 });
 
 	const authorization = c.req.header('Authorization');
 	if (!authorization) return new Response(null, { status: 401 });
-	if (
-		authorization !==
-		`Basic ${btoa(`${c.env.BASIC_USER}:${c.env.BASIC_PASSWORD}`)}`
-	)
-		return new Response(null, { status: 403 });
+
+	const credentials = `Basic ${btoa(`${c.env.BASIC_USER}:${c.env.BASIC_PASSWORD}`)}`;
+	if (authorization !== credentials) return new Response(null, { status: 403 });
 
 	const posted = await c.req.json();
-	if (posted._type !== 'location') {
-		const insertLog = await fetch(
-			insert({ table: 'logs', body: JSON.stringify({ log: posted }) })
+
+	if (posted._type === 'waypoint') {
+		const waypoint = Waypoint.safeParse(posted);
+		if (!waypoint.success) return new Response(null, { status: 400 });
+
+		const { _type, tst, ...rest } = waypoint.data;
+
+		const insertWaypoint = await fetch(
+			insert({
+				table: 'waypoints',
+				body: JSON.stringify({
+					...rest,
+					tst: timestampToDateString(tst),
+				}),
+			})
 		);
-		return new Response(null, { status: insertLog.status });
+
+		return new Response(null, { status: insertWaypoint.status });
 	}
 
-	const parsed = Location.safeParse(posted);
-	if (!parsed.success) return new Response(null, { status: 400 });
+	if (posted._type === 'location') {
+		const location = Location.safeParse(posted);
+		if (!location.success) return new Response(null, { status: 400 });
 
-	const { created_at, tst, _type, ...rest } = parsed.data;
+		const { _type, created_at, tst, ...rest } = location.data;
 
-	const insertLocation = await fetch(
-		insert({
-			table: 'locations',
-			body: JSON.stringify({
-				...rest,
-				created_at: new Date(created_at * 1000).toISOString(),
-				tst: new Date(tst * 1000).toISOString(),
-			}),
-		})
-	);
+		const insertLocation = await fetch(
+			insert({
+				table: 'locations',
+				body: JSON.stringify({
+					...rest,
+					created_at: timestampToDateString(created_at),
+					tst: timestampToDateString(tst),
+				}),
+			})
+		);
 
-	return new Response(null, { status: insertLocation.status });
+		return new Response(null, { status: insertLocation.status });
+	}
+
+	const insertLog = await fetch(insert({ table: 'logs', body: JSON.stringify({ log: posted }) }));
+
+	return new Response(null, { status: insertLog.status });
 });
 
 export default app;
