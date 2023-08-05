@@ -1,6 +1,6 @@
 import type { Bindings } from './worker';
 
-export const insertToSupabase =
+export const NewSupabaseRequest =
 	(env: Bindings) =>
 	(options: { body: string; table: 'locations' | 'logs' | 'transitions' | 'waypoints' }) =>
 		new Request(new URL(`/rest/v1/${options.table}`, env.SUPABASE_URL), {
