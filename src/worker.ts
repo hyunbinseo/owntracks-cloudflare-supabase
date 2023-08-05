@@ -65,8 +65,8 @@ app.post('/', async (c) => {
 		} catch {}
 
 		return newSupabaseRequest({
-			table: 'logs',
-			body: JSON.stringify(json),
+			table: 'messages',
+			body: JSON.stringify({ message: json }),
 		});
 	})();
 
