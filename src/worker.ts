@@ -71,7 +71,15 @@ app.post('/', async (c) => {
 	})();
 
 	const supabaseResponse = await fetch(supabaseRequest);
-	return new Response(null, { status: supabaseResponse.status });
+
+	c.status(supabaseResponse.status);
+	return c.json([
+		{
+			_type: 'cmd',
+			action: 'setConfiguration',
+			configuration: generateConfiguration({ mode: 'significant' }),
+		},
+	]);
 });
 
 export default app;
