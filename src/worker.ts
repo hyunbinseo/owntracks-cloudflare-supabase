@@ -26,10 +26,16 @@ app.post('/', async (c) => {
 
 	const json = await c.req.json();
 
+	let configuration = generateConfiguration({ mode: 'significant' });
+
 	const supabaseRequest = (() => {
 		try {
 			if (json._type === 'location') {
 				const { _type, created_at, tst, ...rest } = Location.parse(json);
+
+				if (!rest.inregions?.includes('Home'))
+					configuration = generateConfiguration({ mode: 'move' });
+
 				return newSupabaseRequest({
 					table: 'locations',
 					body: JSON.stringify({
@@ -42,6 +48,10 @@ app.post('/', async (c) => {
 
 			if (json._type === 'transition') {
 				const { _type, tst, wtst, ...rest } = Transition.parse(json);
+
+				if (rest.event === 'leave' && rest.desc === 'Home')
+					configuration = generateConfiguration({ mode: 'move' });
+
 				return newSupabaseRequest({
 					table: 'transitions',
 					body: JSON.stringify({
@@ -77,7 +87,7 @@ app.post('/', async (c) => {
 		{
 			_type: 'cmd',
 			action: 'setConfiguration',
-			configuration: generateConfiguration({ mode: 'significant' }),
+			configuration,
 		},
 	]);
 });

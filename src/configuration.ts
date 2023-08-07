@@ -12,6 +12,11 @@ type Configuration = { _type: 'configuration' } & Partial<{
 	// The smallest displacement in meters the user must move between location updates.
 	// Defaults to 0 and is an and relationship with interval.
 	// Can be used to only receive updates when the device has moved.
+	moveModeLocatorInterval: number;
+	// How often should locations be requested from the device whilst in Move mode (seconds)
+	// Android's move mode ignores `locatorDisplacement` and uses a separate `moveModeLocatorInterval` value.
+	// However, the JSON API `_type=configuration` docs does not mention the `moveModeLocatorInterval` key.
+	// Referenced the Android application's configuration management menu. (2.4.10)
 }>;
 
 const monitoringEnum = {
@@ -25,12 +30,10 @@ const monitoringEnum = {
 // iOS: https://owntracks.org/booklet/features/location/#move-mode
 // Android: https://owntracks.org/booklet/features/location/#move-mode_1
 
-// Android's move mode ignores `locatorDisplacement` and uses a separate `moveModeLocatorInterval` value.
-// However, the JSON API `_type=configuration` docs does not mention the `moveModeLocatorInterval` key.
-
 const generateConfiguration = ({ mode }: { mode: keyof typeof monitoringEnum }): Configuration => ({
 	_type: 'configuration',
 	monitoring: monitoringEnum[mode],
 	locatorDisplacement: 1,
 	locatorInterval: 60,
+	moveModeLocatorInterval: 60,
 });
